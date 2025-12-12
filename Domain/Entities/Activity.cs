@@ -1,5 +1,8 @@
-﻿namespace Domain.Entities
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace Domain.Entities
 {
+    [Index(nameof(Date))]
     public class Activity
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -20,6 +23,10 @@
         public double Latitude { get; set; }
         public double Longitutde { get; set; }
 
+        // nav properties 
+        public ICollection<ActivityAttendee> Attendees { get; set; } = [];
+
+        public ICollection<Comment> Comments { get; set; } = [];
 
     }
 }

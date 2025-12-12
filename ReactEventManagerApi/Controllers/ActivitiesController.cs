@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using Application.Activities.Command;
+using Application.Activities.DTO;
+using Application.Activities.Queries;
+using Application.Core;
+using Domain.Entities;
+using Infrastructure.DbContext;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Domain.Entities;
-using Infrastructure;
-using MediatR;
-using Application.Activities.Queries;
-using Application.Activities.Command;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Application.Activities.DTO;
+using ReactEventManagerApi.DTOs;
 
 namespace ReactEventManagerApi.Controllers
 {
@@ -31,18 +27,20 @@ namespace ReactEventManagerApi.Controllers
         // GET: api/Activities
         [HttpGet]
 
-        public async Task<ActionResult<IEnumerable<Activity>>> GetActivities()
+        public async Task<ActionResult<PagedList<ActivityDTO,DateTime?>>> GetActivities([FromQuery]ActivityParams activityParams)
         {
-            return await Mediator.Send(new GetActivityList.Query());
+            return HandleResult(await Mediator.Send(new GetActivityList.Query{Params= activityParams }));
         }
 
         // GET: api/Activities/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Activity>> GetActivity(string id)
+        public async Task<ActionResult<ActivityDTO>> GetActivity(string id)
         {
             return HandleResult(await Mediator.Send(new GetActivityDetails.Query { Id=id}));
         }
 
+        
+        /*
         // PUT: api/Activities/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
@@ -73,7 +71,8 @@ namespace ReactEventManagerApi.Controllers
 
             return NoContent();
         }
-
+        */
+        /*
         // POST: api/Activities
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
@@ -98,6 +97,7 @@ namespace ReactEventManagerApi.Controllers
 
             return CreatedAtAction("GetActivity", new { id = activity.Id }, activity);
         }
+        */
 
         [HttpPost("Create")]
         public async Task<ActionResult<string>> CreateActivity(CreateActivityDTO activitydto)
@@ -106,13 +106,16 @@ namespace ReactEventManagerApi.Controllers
 
         }
 
-        [HttpPut]
-        public async Task <ActionResult<Activity>> EditActivty(EditActivityDTO activity)
+        [HttpPut("{id}")]
+        [Authorize(Policy = "IsActivityHost")]
+        public async Task <ActionResult<Activity>> EditActivty(string id,EditActivityDTO activity)
         {
+            activity.Id = id;
              return HandleResult(await Mediator.Send(new EditActivity.Command { ActivityDto=activity}));
         }
         // DELETE: api/Activities/5
         [HttpDelete("{id}")]
+        [Authorize(Policy = "IsActivityHost")]
         public async Task<IActionResult> DeleteActivity(string id)
         {
             return HandleResult(await Mediator.Send(new DeleteActivity.Command { Id = id }));
@@ -140,5 +143,12 @@ namespace ReactEventManagerApi.Controllers
         {
             return _context.Activities.Any(e => e.Id == id);
         }
+
+        [HttpPost("{id}/attend")]
+        public async Task<ActionResult> Attend(string id)
+        {
+            return HandleResult(await Mediator.Send(new UpdateAttendance.Command { Id = id }));
+        }
+
     }
 }
