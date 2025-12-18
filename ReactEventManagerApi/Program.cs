@@ -183,13 +183,17 @@ app.UseMiddleware<ExceptionMiddleware>();
 app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowCredentials()
             .WithOrigins("https://localhost:3000"));
 app.UseHttpsRedirection();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHub<CommentHub>("/comments");
 app.UseDefaultFiles();
 app.UseStaticFiles();
+
+app.MapHub<CommentHub>("/comments");
+app.MapFallbackToController("Index", "Home");
 app.MapControllers();
+
 
 using var scope = app.Services.CreateScope(); 
 var services = scope.ServiceProvider;
